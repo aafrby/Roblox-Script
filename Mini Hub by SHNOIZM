@@ -1,12 +1,7 @@
--- SUPER SAFE MINI HUB
+-- BASIC STABLE HUB (GUI sederhana tapi jalan)
 
 local player = game.Players.LocalPlayer
-repeat task.wait() until player:FindFirstChild("PlayerGui")
-
--- hapus GUI lama
-pcall(function()
-    player.PlayerGui:FindFirstChild("SafeHub"):Destroy()
-end)
+local char = player.Character or player.CharacterAdded:Wait()
 
 -- state
 local autoCollect = false
@@ -30,65 +25,28 @@ local function isMatch(name, list)
     return false
 end
 
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "SafeHub"
-gui.ResetOnSpawn = false
-gui.Parent = player.PlayerGui
+-- GUI (versi lama yang stabil)
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "BasicHub"
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,180,0,120)
-frame.Position = UDim2.new(0,100,0,100)
-frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Size = UDim2.new(0, 160, 0, 120)
+frame.Position = UDim2.new(0, 20, 0, 200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
--- drag manual
-local UIS = game:GetService("UserInputService")
-local dragging, dragInput, dragStart, startPos
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-local function makeBtn(txt, y)
-    local b = Instance.new("TextButton", frame)
-    b.Size = UDim2.new(0.8,0,0,25)
-    b.Position = UDim2.new(0.1,0,y,0)
-    b.Text = txt.." OFF"
-    b.BackgroundColor3 = Color3.fromRGB(100,0,0)
-    b.TextColor3 = Color3.new(1,1,1)
-    return b
+local function makeBtn(text, y)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1, -20, 0, 30)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.Text = text.." OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
+    btn.TextColor3 = Color3.new(1,1,1)
+    return btn
 end
 
-local collectBtn = makeBtn("Collect", 0.1)
-local upgradeBtn = makeBtn("Upgrade", 0.4)
-local speedBtn = makeBtn("Speed", 0.7)
+local collectBtn = makeBtn("Collect", 5)
+local upgradeBtn = makeBtn("Upgrade", 40)
+local speedBtn = makeBtn("Speed", 75)
 
 local function toggle(btn, state)
     if state then
@@ -96,7 +54,7 @@ local function toggle(btn, state)
         btn.BackgroundColor3 = Color3.fromRGB(0,120,0)
     else
         btn.Text = btn.Text:gsub("ON","OFF")
-        btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+        btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
     end
 end
 
@@ -119,15 +77,12 @@ end)
 task.spawn(function()
     while true do
         if autoCollect then
-            local char = player.Character
-            if char then
-                local root = char:FindFirstChild("HumanoidRootPart")
-                if root then
-                    for _, obj in pairs(workspace:GetDescendants()) do
-                        if obj:IsA("BasePart") and isMatch(obj.Name, moneyKeys) then
-                            firetouchinterest(root, obj, 0)
-                            firetouchinterest(root, obj, 1)
-                        end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and isMatch(obj.Name, moneyKeys) then
+                        firetouchinterest(root, obj, 0)
+                        firetouchinterest(root, obj, 1)
                     end
                 end
             end
@@ -156,11 +111,15 @@ end)
 
 -- speed
 game:GetService("RunService").Heartbeat:Connect(function()
-    local char = player.Character
-    if char then
+    if speedEnabled then
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
-            hum.WalkSpeed = speedEnabled and walkSpeed or normalSpeed
+            hum.WalkSpeed = walkSpeed
+        end
+    else
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = normalSpeed
         end
     end
 end)
