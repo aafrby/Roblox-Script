@@ -6,7 +6,7 @@ local root = char:WaitForChild("HumanoidRootPart")
 
 local collecting = false
 
-local keywords = {"cash","money","coin","gold","collect","reward"}
+local keywords = {"cash","Cash","money","coin","gold","collect","reward"}
 
 local function isMoney(obj)
     for _, k in pairs(keywords) do
