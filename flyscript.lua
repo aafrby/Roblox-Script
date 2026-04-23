@@ -1,95 +1,99 @@
--- setup
+--// Fly GUI Script by your "someone who always watches you"
+
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
-local uis = game:GetService("UserInputService")
-local run = game:GetService("RunService")
-
-local flying = false
-local speed = 50
-local direction = Vector3.zero
-
--- physics
-local bv = Instance.new("BodyVelocity")
-bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-
-local bg = Instance.new("BodyGyro")
-bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
 
 -- GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "FlyGui"
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.CoreGui
 
-local frame = Instance.new("Frame", gui)
+local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,200,0,120)
-frame.Position = UDim2.new(0,20,0.5,-60)
+frame.Position = UDim2.new(0,20,0,200)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Parent = screenGui
 
-local toggleBtn = Instance.new("TextButton", frame)
-toggleBtn.Size = UDim2.new(1,-20,0,40)
-toggleBtn.Position = UDim2.new(0,10,0,10)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(1,0,0,40)
+toggleBtn.Position = UDim2.new(0,0,0,0)
 toggleBtn.Text = "Fly: OFF"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+toggleBtn.Parent = frame
 
-local speedBox = Instance.new("TextBox", frame)
-speedBox.Size = UDim2.new(1,-20,0,40)
-speedBox.Position = UDim2.new(0,10,0,60)
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(1,0,0,40)
+speedBox.Position = UDim2.new(0,0,0,50)
 speedBox.Text = "Speed: 50"
+speedBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+speedBox.Parent = frame
 
--- toggle logic
+-- Fly System
+local flying = false
+local speed = 50
+local bodyVelocity
+local bodyGyro
+
+function startFly()
+	bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
+	bodyVelocity.Velocity = Vector3.new(0,0,0)
+	bodyVelocity.Parent = humanoidRootPart
+
+	bodyGyro = Instance.new("BodyGyro")
+	bodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
+	bodyGyro.CFrame = humanoidRootPart.CFrame
+	bodyGyro.Parent = humanoidRootPart
+
+	game:GetService("RunService").RenderStepped:Connect(function()
+		if flying then
+			local cam = workspace.CurrentCamera
+			local moveDir = Vector3.new()
+
+			if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+				moveDir = moveDir + cam.CFrame.LookVector
+			end
+			if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+				moveDir = moveDir - cam.CFrame.LookVector
+			end
+			if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+				moveDir = moveDir - cam.CFrame.RightVector
+			end
+			if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+				moveDir = moveDir + cam.CFrame.RightVector
+			end
+
+			bodyVelocity.Velocity = moveDir * speed
+			bodyGyro.CFrame = cam.CFrame
+		end
+	end)
+end
+
+function stopFly()
+	if bodyVelocity then bodyVelocity:Destroy() end
+	if bodyGyro then bodyGyro:Destroy() end
+end
+
+-- Toggle Button
 toggleBtn.MouseButton1Click:Connect(function()
 	flying = not flying
-	
 	if flying then
-		bv.Parent = hrp
-		bg.Parent = hrp
 		toggleBtn.Text = "Fly: ON"
+		startFly()
 	else
-		bv.Parent = nil
-		bg.Parent = nil
 		toggleBtn.Text = "Fly: OFF"
+		stopFly()
 	end
 end)
 
--- speed control
+-- Speed Control
 speedBox.FocusLost:Connect(function()
-	local num = tonumber(speedBox.Text:match("%d+"))
+	local text = speedBox.Text:gsub("Speed: ","")
+	local num = tonumber(text)
 	if num then
 		speed = num
 		speedBox.Text = "Speed: "..num
 	else
 		speedBox.Text = "Speed: "..speed
-	end
-end)
-
--- movement input
-uis.InputBegan:Connect(function(input,gpe)
-	if gpe then return end
-	
-	if input.KeyCode == Enum.KeyCode.W then direction += Vector3.new(0,0,-1) end
-	if input.KeyCode == Enum.KeyCode.S then direction += Vector3.new(0,0,1) end
-	if input.KeyCode == Enum.KeyCode.A then direction += Vector3.new(-1,0,0) end
-	if input.KeyCode == Enum.KeyCode.D then direction += Vector3.new(1,0,0) end
-	if input.KeyCode == Enum.KeyCode.Space then direction += Vector3.new(0,1,0) end
-	if input.KeyCode == Enum.KeyCode.LeftControl then direction += Vector3.new(0,-1,0) end
-end)
-
-uis.InputEnded:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.W then direction -= Vector3.new(0,0,-1) end
-	if input.KeyCode == Enum.KeyCode.S then direction -= Vector3.new(0,0,1) end
-	if input.KeyCode == Enum.KeyCode.A then direction -= Vector3.new(-1,0,0) end
-	if input.KeyCode == Enum.KeyCode.D then direction -= Vector3.new(1,0,0) end
-	if input.KeyCode == Enum.KeyCode.Space then direction -= Vector3.new(0,1,0) end
-	if input.KeyCode == Enum.KeyCode.LeftControl then direction -= Vector3.new(0,-1,0) end
-end)
-
--- main loop
-run.RenderStepped:Connect(function()
-	if flying then
-		local cam = workspace.CurrentCamera
-		local move = cam.CFrame:VectorToWorldSpace(direction)
-		
-		bv.Velocity = move * speed
-		bg.CFrame = cam.CFrame
 	end
 end)
