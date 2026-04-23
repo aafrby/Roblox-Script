@@ -1,0 +1,28 @@
+-- Silent Auto Collect (tanpa gerak karakter)
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+
+local keywords = {"cash","money","coin","gold","collect","reward"}
+
+local function isMoney(obj)
+    for _, k in pairs(keywords) do
+        if string.find(string.lower(obj.Name), k) then
+            return true
+        end
+    end
+    return false
+end
+
+while true do
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and isMoney(obj) then
+            pcall(function()
+                firetouchinterest(root, obj, 0)
+                firetouchinterest(root, obj, 1)
+            end)
+        end
+    end
+    task.wait(0.5)
+end
