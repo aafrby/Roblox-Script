@@ -1,8 +1,10 @@
--- Silent Auto Collect (tanpa gerak karakter)
+-- Auto Collect Silent + GUI Toggle
 
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local root = char:WaitForChild("HumanoidRootPart")
+
+local collecting = false
 
 local keywords = {"cash","money","coin","gold","collect","reward"}
 
@@ -15,14 +17,56 @@ local function isMoney(obj)
     return false
 end
 
-while true do
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and isMoney(obj) then
-            pcall(function()
-                firetouchinterest(root, obj, 0)
-                firetouchinterest(root, obj, 1)
-            end)
-        end
+-- GUI
+local screenGui = Instance.new("ScreenGui", game.CoreGui)
+screenGui.Name = "AutoCollectGUI"
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 160, 0, 90)
+frame.Position = UDim2.new(0, 20, 0, 200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(1, -20, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 10)
+button.Text = "OFF"
+button.BackgroundColor3 = Color3.fromRGB(120,0,0)
+button.TextColor3 = Color3.new(1,1,1)
+
+local status = Instance.new("TextLabel", frame)
+status.Size = UDim2.new(1, -20, 0, 20)
+status.Position = UDim2.new(0, 10, 0, 55)
+status.Text = "Status: Idle"
+status.TextColor3 = Color3.new(1,1,1)
+status.BackgroundTransparency = 1
+
+-- toggle button
+button.MouseButton1Click:Connect(function()
+    collecting = not collecting
+    if collecting then
+        button.Text = "ON"
+        button.BackgroundColor3 = Color3.fromRGB(0,120,0)
+        status.Text = "Status: Collecting..."
+    else
+        button.Text = "OFF"
+        button.BackgroundColor3 = Color3.fromRGB(120,0,0)
+        status.Text = "Status: Idle"
     end
-    task.wait(0.5)
-end
+end)
+
+-- loop
+task.spawn(function()
+    while true do
+        if collecting then
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and isMoney(obj) then
+                    pcall(function()
+                        firetouchinterest(root, obj, 0)
+                        firetouchinterest(root, obj, 1)
+                    end)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
