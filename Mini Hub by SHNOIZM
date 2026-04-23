@@ -1,4 +1,4 @@
--- Mini Hub by SHNOIZM
+-- Mini Hub: Auto Collect + Auto Upgrade + Speed
 
 local player = game.Players.LocalPlayer
 
