@@ -1,11 +1,11 @@
--- FULL FIX MINI HUB (Auto Collect + Upgrade + Speed)
+-- SUPER SAFE MINI HUB
 
 local player = game.Players.LocalPlayer
-repeat task.wait() until player.Character
+repeat task.wait() until player:FindFirstChild("PlayerGui")
 
--- cleanup GUI lama
+-- hapus GUI lama
 pcall(function()
-    player.PlayerGui:FindFirstChild("MiniHub"):Destroy()
+    player.PlayerGui:FindFirstChild("SafeHub"):Destroy()
 end)
 
 -- state
@@ -13,74 +13,90 @@ local autoCollect = false
 local autoUpgrade = false
 local speedEnabled = false
 
-local collectDelay = 0.3
-local upgradeDelay = 0.5
 local walkSpeed = 50
 local normalSpeed = 16
 
--- keywords
-local moneyKeys = {"cash","money","coin","gold","collect","reward"}
+local moneyKeys = {"cash","money","coin","gold"}
 local upgradeKeys = {"upgrade","level","brainrot"}
 
--- functions
+-- function
 local function isMatch(name, list)
+    name = string.lower(name)
     for _, k in pairs(list) do
-        if string.find(string.lower(name), k) then
+        if string.find(name, k) then
             return true
         end
     end
     return false
 end
 
-local function getLevel(obj)
-    local lvl = obj:FindFirstChild("Level")
-        or obj:FindFirstChild("Lvl")
-        or obj:FindFirstChild("level")
-    if lvl and tonumber(lvl.Value) then
-        return lvl.Value
-    end
-    return 0
-end
-
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "MiniHub"
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Name = "SafeHub"
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 150)
-frame.Position = UDim2.new(0.4, 0, 0.4, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-frame.Active = true
-frame.Draggable = true
+frame.Size = UDim2.new(0,180,0,120)
+frame.Position = UDim2.new(0,100,0,100)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,25)
-title.Text = "Mini Auto Hub"
-title.BackgroundColor3 = Color3.fromRGB(40,40,40)
-title.TextColor3 = Color3.new(1,1,1)
+-- drag manual
+local UIS = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
 
-local function makeButton(text, posY)
-    local btn = Instance.new("TextButton", frame)
-    btn.Size = UDim2.new(0.8,0,0,25)
-    btn.Position = UDim2.new(0.1,0,posY,0)
-    btn.Text = text.." OFF"
-    btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
-    btn.TextColor3 = Color3.new(1,1,1)
-    return btn
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+local function makeBtn(txt, y)
+    local b = Instance.new("TextButton", frame)
+    b.Size = UDim2.new(0.8,0,0,25)
+    b.Position = UDim2.new(0.1,0,y,0)
+    b.Text = txt.." OFF"
+    b.BackgroundColor3 = Color3.fromRGB(100,0,0)
+    b.TextColor3 = Color3.new(1,1,1)
+    return b
 end
 
-local collectBtn = makeButton("Auto Collect", 0.25)
-local upgradeBtn = makeButton("Auto Upgrade", 0.45)
-local speedBtn = makeButton("Speed", 0.65)
+local collectBtn = makeBtn("Collect", 0.1)
+local upgradeBtn = makeBtn("Upgrade", 0.4)
+local speedBtn = makeBtn("Speed", 0.7)
 
 local function toggle(btn, state)
     if state then
-        btn.Text = string.gsub(btn.Text, "OFF", "ON")
+        btn.Text = btn.Text:gsub("OFF","ON")
         btn.BackgroundColor3 = Color3.fromRGB(0,120,0)
     else
-        btn.Text = string.gsub(btn.Text, "ON", "OFF")
-        btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
+        btn.Text = btn.Text:gsub("ON","OFF")
+        btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
     end
 end
 
@@ -99,7 +115,7 @@ speedBtn.MouseButton1Click:Connect(function()
     toggle(speedBtn, speedEnabled)
 end)
 
--- Auto Collect
+-- auto collect
 task.spawn(function()
     while true do
         if autoCollect then
@@ -109,56 +125,36 @@ task.spawn(function()
                 if root then
                     for _, obj in pairs(workspace:GetDescendants()) do
                         if obj:IsA("BasePart") and isMatch(obj.Name, moneyKeys) then
-                            pcall(function()
-                                firetouchinterest(root, obj, 0)
-                                firetouchinterest(root, obj, 1)
-                            end)
+                            firetouchinterest(root, obj, 0)
+                            firetouchinterest(root, obj, 1)
                         end
                     end
                 end
             end
         end
-        task.wait(collectDelay)
+        task.wait(0.5)
     end
 end)
 
--- Auto Upgrade
+-- auto upgrade
 task.spawn(function()
     while true do
         if autoUpgrade then
-            local upgrades = {}
-
             for _, obj in pairs(workspace:GetDescendants()) do
-                if (obj:IsA("Model") or obj:IsA("BasePart")) and isMatch(obj.Name, upgradeKeys) then
-                    table.insert(upgrades, {
-                        object = obj,
-                        level = getLevel(obj)
-                    })
-                end
-            end
-
-            table.sort(upgrades, function(a,b)
-                return a.level < b.level
-            end)
-
-            for _, data in ipairs(upgrades) do
-                pcall(function()
-                    local obj = data.object
-
+                if isMatch(obj.Name, upgradeKeys) then
                     local cd = obj:FindFirstChildOfClass("ClickDetector")
                     if cd then fireclickdetector(cd) end
 
                     local prompt = obj:FindFirstChildOfClass("ProximityPrompt")
                     if prompt then fireproximityprompt(prompt) end
-                end)
-                task.wait(upgradeDelay)
+                end
             end
         end
         task.wait(1)
     end
 end)
 
--- Speed
+-- speed
 game:GetService("RunService").Heartbeat:Connect(function()
     local char = player.Character
     if char then
