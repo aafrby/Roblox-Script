@@ -1,6 +1,12 @@
--- Mini Hub: Auto Collect + Auto Upgrade + Speed
+-- FULL FIX MINI HUB (Auto Collect + Upgrade + Speed)
 
 local player = game.Players.LocalPlayer
+repeat task.wait() until player.Character
+
+-- cleanup GUI lama
+pcall(function()
+    player.PlayerGui:FindFirstChild("MiniHub"):Destroy()
+end)
 
 -- state
 local autoCollect = false
@@ -16,10 +22,7 @@ local normalSpeed = 16
 local moneyKeys = {"cash","money","coin","gold","collect","reward"}
 local upgradeKeys = {"upgrade","level","brainrot"}
 
--- =========================
--- Functions
--- =========================
-
+-- functions
 local function isMatch(name, list)
     for _, k in pairs(list) do
         if string.find(string.lower(name), k) then
@@ -39,12 +42,10 @@ local function getLevel(obj)
     return 0
 end
 
--- =========================
 -- GUI
--- =========================
-
-local gui = Instance.new("ScreenGui", game.CoreGui)
+local gui = Instance.new("ScreenGui")
 gui.Name = "MiniHub"
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 200, 0, 150)
@@ -73,10 +74,6 @@ local collectBtn = makeButton("Auto Collect", 0.25)
 local upgradeBtn = makeButton("Auto Upgrade", 0.45)
 local speedBtn = makeButton("Speed", 0.65)
 
--- =========================
--- Toggle Logic
--- =========================
-
 local function toggle(btn, state)
     if state then
         btn.Text = string.gsub(btn.Text, "OFF", "ON")
@@ -102,10 +99,7 @@ speedBtn.MouseButton1Click:Connect(function()
     toggle(speedBtn, speedEnabled)
 end)
 
--- =========================
--- Auto Collect Loop
--- =========================
-
+-- Auto Collect
 task.spawn(function()
     while true do
         if autoCollect then
@@ -128,10 +122,7 @@ task.spawn(function()
     end
 end)
 
--- =========================
--- Auto Upgrade Loop
--- =========================
-
+-- Auto Upgrade
 task.spawn(function()
     while true do
         if autoUpgrade then
@@ -167,10 +158,7 @@ task.spawn(function()
     end
 end)
 
--- =========================
--- Speed Loop
--- =========================
-
+-- Speed
 game:GetService("RunService").Heartbeat:Connect(function()
     local char = player.Character
     if char then
