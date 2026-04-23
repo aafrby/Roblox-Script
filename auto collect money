@@ -1,4 +1,4 @@
--- Auto Collect Silent + GUI Toggle
+-- Mini GUI Auto Collect (Draggable + Toggle)
 
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
@@ -18,43 +18,42 @@ local function isMoney(obj)
 end
 
 -- GUI
-local screenGui = Instance.new("ScreenGui", game.CoreGui)
-screenGui.Name = "AutoCollectGUI"
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "MiniCollectGUI"
 
-local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 160, 0, 90)
-frame.Position = UDim2.new(0, 20, 0, 200)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 180, 0, 100)
+frame.Position = UDim2.new(0.5, -90, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Active = true
+frame.Draggable = true
 
-local button = Instance.new("TextButton", frame)
-button.Size = UDim2.new(1, -20, 0, 40)
-button.Position = UDim2.new(0, 10, 0, 10)
-button.Text = "OFF"
-button.BackgroundColor3 = Color3.fromRGB(120,0,0)
-button.TextColor3 = Color3.new(1,1,1)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 25)
+title.Text = "Mini Auto Farm"
+title.BackgroundColor3 = Color3.fromRGB(40,40,40)
+title.TextColor3 = Color3.new(1,1,1)
 
-local status = Instance.new("TextLabel", frame)
-status.Size = UDim2.new(1, -20, 0, 20)
-status.Position = UDim2.new(0, 10, 0, 55)
-status.Text = "Status: Idle"
-status.TextColor3 = Color3.new(1,1,1)
-status.BackgroundTransparency = 1
+local toggle = Instance.new("TextButton", frame)
+toggle.Size = UDim2.new(0.8, 0, 0, 35)
+toggle.Position = UDim2.new(0.1, 0, 0.4, 0)
+toggle.Text = "OFF"
+toggle.BackgroundColor3 = Color3.fromRGB(120,0,0)
+toggle.TextColor3 = Color3.new(1,1,1)
 
--- toggle button
-button.MouseButton1Click:Connect(function()
+-- Toggle logic
+toggle.MouseButton1Click:Connect(function()
     collecting = not collecting
     if collecting then
-        button.Text = "ON"
-        button.BackgroundColor3 = Color3.fromRGB(0,120,0)
-        status.Text = "Status: Collecting..."
+        toggle.Text = "ON"
+        toggle.BackgroundColor3 = Color3.fromRGB(0,120,0)
     else
-        button.Text = "OFF"
-        button.BackgroundColor3 = Color3.fromRGB(120,0,0)
-        status.Text = "Status: Idle"
+        toggle.Text = "OFF"
+        toggle.BackgroundColor3 = Color3.fromRGB(120,0,0)
     end
 end)
 
--- loop
+-- Loop collect
 task.spawn(function()
     while true do
         if collecting then
